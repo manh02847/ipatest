@@ -1,0 +1,77 @@
+name: Publish verified IPA
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-ipa.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ipa-tele-lythapphong-20261011
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      IPA_NAME: LienQuan_Tele_lythapphong_NoKey_NoDevice_NoAutoAI.ipa
+    steps:
+      - name: Download supplied original IPA
+        run: |
+          mkdir -p "$RUNNER_TEMP/ipa-publish"
+          python3 -m venv "$RUNNER_TEMP/ipa-publish/venv"
+          "$RUNNER_TEMP/ipa-publish/venv/bin/pip" --quiet install gdown
+          "$RUNNER_TEMP/ipa-publish/venv/bin/gdown" 'https://drive.google.com/uc?id=1ikvS_CfE1A3ghCimee0CaEFzCG5TbKX2' -O "$RUNNER_TEMP/ipa-publish/source.ipa"
+      - name: Apply verified native patch and validate complete IPA
+        run: |
+          python3 - <<'PY'
+          PATCH={'source_ipa_sha256': '2dcd5b24b257bd3ff2aa15495b85a2be8b6761a61ab791c532015afdf2742a19', 'source_framework_sha256': '65a2b3ac5a4a564a14f7553339bace0109e5f164f15d64f33049fb466d557d67', 'output_framework_sha256': '5e82ea9ba9f391a550875d7889ffaad81718b6aa2fbc646de06d9995e97a8621', 'patches': [{'address': 73699432, 'offset': 73699432, 'original': 'ffc302d1fd7b0aa9fd83029108ba00f0080541f9a8031df8e8c600f008c13691a8831df8e8c600f008813791a8031ef868c700b0', 'replacement': 'fd7bbfa9fd030091000080d201a08cd2a1b9a3f2ecde419401ba00f0216c40f922ba0090422012910edf4194fd7bc1a8c0035fd6', 'reason': 'Replace the remote key/device constructor with delayed main-queue menu startup.'}, {'address': 73699944, 'offset': 73699944, 'original': '09288a52e950ae720801092a29f38452293abc72087d091b892c9b522944ab720801092a49c49d526983ae720809c91a09889852a982bd720801090b29fe8e52498fb1720801096ba93881524919b0720801092aa93e885249baac720801094a09f5975209f4ad720801096b093f9b52898faf720801090a29be8752a96fa1720801096b293e8f52899eb3720801090ae9478252c974bd72087d091ba98d9a52091db2720801096ba9399c52', 'replacement': 'fd7bbda9f35301a9fd030091ce412594addd4194f30300aaf30300b4008400f00074269185df4194e10300aae00313aa9fdd4194000300b4f40300aae083009000400b917ddf4194e10300aae00314aa97dd4194000200b40000009000a02391cf3b2594408a00f000c8369176df4194f40300aa00b700d0005017916fdf4194e10300aae00314aa2200805288dd4194020000145bffff97e00313aa87dd4194f35341a9fd7bc3a8c0035fd6', 'reason': 'Wait for an actual app window/root view, then reuse the original menu and gesture builder.'}, {'address': 98096280, 'offset': 98096280, 'original': 'dcd7650400000000', 'replacement': '6892640400000000', 'reason': 'Reuse the original rebased global block for the main-queue startup callback.'}, {'address': 73700712, 'offset': 73700712, 'original': '49a89b52a9dbb2720801096b', 'replacement': '0000009000a02191c0035fd6', 'reason': 'Return the requested UTF-8 menu title.'}, {'address': 73700776, 'offset': 73700776, 'original': '0801096be8179f1a686e0237', 'replacement': '0000009000a02291c0035fd6', 'reason': 'Provide the local assembly name used by this IPA.'}, {'address': 73701480, 'offset': 73701480, 'original': 'e8179f1a68b5033701000014a8c35cb8c92285', 'replacement': '54656c653a20406c797468617070686f6e6700', 'reason': 'Requested menu name.'}, {'address': 73701544, 'offset': 73701544, 'original': '01000014a8c35cb889979752890fbd720801096b', 'replacement': '417373656d626c792d4353686172702e646c6c00', 'reason': 'Local assembly name; the original game method/field resolver is retained.'}, {'address': 73701608, 'offset': 73701608, 'original': '89e49c52e957bd720801096be8179f1a48000036f4490014a8c35cb849d38d52a97ebd720801096be8179f1a4800003620340014a8c35cb8a91c81524986bd72', 'replacement': '000000000000000000000000000000000000000000000000000000000000000000000000000000001af500000000000000000000000000000000000000000000', 'reason': 'Local startup captures for the original menu builder; decoded gesture is two taps with three fingers.'}, {'address': 81801076, 'offset': 81801076, 'original': 'f44fbea9fd7b01a9', 'replacement': '20008052c0035fd6', 'reason': 'Remove the internal menu authorization gate; its callers request the menu capability.'}, {'address': 85907348, 'offset': 85907348, 'original': 'fd7bbfa9fd030091', 'replacement': '20008052c0035fd6', 'reason': 'Let the original initializer proceed without a remote key/device session.'}, {'address': 82894624, 'offset': 82894624, 'original': 'f87b0b94', 'replacement': 'a2eddc97', 'reason': 'Replace only this initializer DLL-key lookup with the local assembly name.'}, {'address': 82894640, 'offset': 82894640, 'original': 'f47b0b94', 'replacement': '9eeddc97', 'reason': 'Replace only this initializer DLL-key lookup with the local assembly name.'}, {'address': 86041412, 'offset': 86041412, 'original': '9b75ff97', 'replacement': '89ecd097', 'reason': 'Use the fixed requested title at the original ImGui window title call site.'}, {'address': 83432380, 'offset': 83432380, 'original': '49010039', 'replacement': '1f2003d5', 'reason': 'Remove only the unsolicited write enabling LObjWrapper.m_isAutoAI.'}]}
+          import copy,hashlib,json,os,shutil,zipfile
+          from pathlib import Path
+          work=Path(os.environ['RUNNER_TEMP'])/'ipa-publish'
+          source=work/'source.ipa';dest=work/os.environ['IPA_NAME']
+          member='Payload/kgvn.app/Frameworks/aovnet.framework/aovnet'
+          def digest(stream):
+              h=hashlib.sha256()
+              for chunk in iter(lambda:stream.read(4*1024*1024),b''):h.update(chunk)
+              return h.hexdigest()
+          with source.open('rb') as f:assert digest(f)==PATCH['source_ipa_sha256'],'Original IPA changed'
+          with zipfile.ZipFile(source) as src:
+              original=src.infolist()
+              assert len(original)==562 and sum(i.filename==member for i in original)==1
+              binary=bytearray(src.read(member))
+              assert hashlib.sha256(binary).hexdigest()==PATCH['source_framework_sha256']
+              for patch in PATCH['patches']:
+                  offset=patch['offset'];before=bytes.fromhex(patch['original']);after=bytes.fromhex(patch['replacement'])
+                  assert len(before)==len(after) and binary[offset:offset+len(before)]==before
+                  binary[offset:offset+len(after)]=after
+              assert hashlib.sha256(binary).hexdigest()==PATCH['output_framework_sha256']
+              replacement=work/'aovnet';replacement.write_bytes(binary)
+              with zipfile.ZipFile(dest,'w',allowZip64=True) as out:
+                  for info in original:
+                      with (replacement.open('rb') if info.filename==member else src.open(info)) as stream:
+                          with out.open(copy.copy(info),'w') as target:shutil.copyfileobj(stream,target,4*1024*1024)
+                  out.comment=src.comment
+          with zipfile.ZipFile(dest) as result:
+              infos=result.infolist()
+              assert [i.filename for i in infos]==[i.filename for i in original]
+              for before,after in zip(original,infos):
+                  assert before.external_attr==after.external_attr
+                  if before.filename!=member:assert (before.CRC,before.file_size)==(after.CRC,after.file_size)
+              with result.open(member) as f:assert digest(f)==PATCH['output_framework_sha256']
+              assert result.testzip() is None
+          with dest.open('rb') as f:output_hash=digest(f)
+          notes='- Tắt yêu cầu key và xác thực thiết bị của menu aovnet.\n- Đổi tên menu thành **Tele: @lythapphong**.\n- Bỏ riêng lệnh ép Auto AI; giữ nguyên trạng thái AI hợp lệ của game.\n- Cử chỉ menu: chạm hai lần bằng ba ngón tay.\n\nChỉ thay framework aovnet. Đã kiểm tra mã ARM64 và CRC của toàn bộ 562 mục trong IPA; chưa thử trực tiếp trên iPhone. Ký lại IPA trước khi cài.\n\n'
+          (work/'release_notes.md').write_text(notes+'SHA-256 IPA: `'+output_hash+'`\n')
+          print(json.dumps({'name':dest.name,'size':dest.stat().st_size,'sha256':output_hash,'aovnet_sha256':PATCH['output_framework_sha256']}))
+          PY
+      - name: Publish IPA in GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create 'tele-lythapphong-20261011' "$RUNNER_TEMP/ipa-publish/$IPA_NAME" --target "$GITHUB_SHA" --title 'Tele: @lythapphong — Liên Quân 1.64' --notes-file "$RUNNER_TEMP/ipa-publish/release_notes.md"
